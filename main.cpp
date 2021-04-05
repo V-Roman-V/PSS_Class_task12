@@ -49,20 +49,15 @@ namespace Calendar{
 
 		DayOfWeek& operator=  (const DayOfWeek& d) {day = d.day; return *this;}
 		DayOfWeek& operator=  (int d) {day = intToEnum(d); return *this;}
-		DayOfWeek operator+  (int s) const {
-			DayOfWeek curD(*this);
-			curD.day = curD.intToEnum( (static_cast<int>(curD.day) - 1 + s%countDays + countDays)%countDays + 1);
-			return curD;
+		DayOfWeek& operator+=  (int s) {
+			day = intToEnum( (static_cast<int>(day) - 1 + s%countDays + countDays)%countDays + 1);
+			return *this;
 		}
+		DayOfWeek& operator-=  (int s) {return operator +=(-s);}
+		DayOfWeek& operator++ () {return operator +=(1);}
+		DayOfWeek& operator-- () {return operator -=(1);}
+		DayOfWeek operator+ (int s) const {DayOfWeek curD(*this);return curD+=s;}
 		DayOfWeek operator-  (int s) const {return operator+(-s);}
-		DayOfWeek& operator++ () {
-			day = intToEnum( (static_cast<int>(day))%countDays + 1);
-			return *this;
-		}
-		DayOfWeek& operator-- () {
-			day = intToEnum( (static_cast<int>(day) - 2 + countDays)%countDays + 1);
-			return *this;
-		}
 		
 		friend std::ostream& operator<< (std::ostream &out, const DayOfWeek &D){
 			return out<<enumToStr(D.day);
@@ -131,20 +126,17 @@ namespace Calendar{
 
 		Month& operator=  (const Month& m) {month = m.month; return *this;}
 		Month& operator=  (int m) {month = intToEnum(m); return *this;}
-		Month operator+  (int s) const {
-			Month curM(*this);
-			curM.month = curM.intToEnum( (static_cast<int>(curM.month) - 1 + s%countMonths + countMonths)%countMonths + 1);
-			return curM;
-		}
-		Month operator-  (int s) const{return operator+(-s);}
-		Month& operator++ () {
-			month = intToEnum( (static_cast<int>(month))%countMonths + 1);
+
+		Month& operator+= (int sh) {
+			month = intToEnum( (static_cast<int>(month) - 1 + sh%countMonths + countMonths)%countMonths + 1);
 			return *this;
 		}
-		Month& operator-- () {
-			month = intToEnum( (static_cast<int>(month) - 2 + countMonths)%countMonths + 1);
-			return *this;
-		}
+		Month& operator-= (int sh) {return operator+=(-sh);}
+		Month& operator++ () {return operator+=(1);}
+		Month& operator-- () {return operator-=(1);}
+		Month operator+ (int s) const {Month curM(*this);return curM+=s;}
+		Month operator- (int s) const{return operator+(-s);}
+		
 
 		friend std::ostream& operator<< (std::ostream &out, const Month &M){
 			return out<<enumToStr(M.month);
@@ -272,19 +264,23 @@ namespace Calendar{
 		
 		class Iterator{
 			Date* date;
-
 		public:
 			Date& operator*() {return *date;}
+
+			Iterator& operator+= (int sh){
+				*date = date->shiftDay(sh);
+				return *this;
+			}
+			Iterator& operator-= (int sh){return operator+=(-sh);}
+			Iterator& operator++ (){return operator+=(1);}
+			Iterator& operator-- (){return operator-=(1);}
 
 			Iterator operator+ (int sh) const {
 				Iterator curI;
 				*(curI.date) = *(this->date);
-				*(curI.date) = (*curI.date).shiftDay(sh);
-				return curI;
+				return curI+=sh;
 			}
 			Iterator operator- (int sh) const {return operator+(-sh);}
-			Iterator operator++ () const {return operator+(1);}
-			Iterator operator-- () const {return operator-(1);}
 		};
 	private:
 		uint16_t year;
