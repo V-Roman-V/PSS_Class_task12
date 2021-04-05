@@ -136,7 +136,6 @@ namespace Calendar{
 		Month& operator-- () {return operator-=(1);}
 		Month operator+ (int s) const {Month curM(*this);return curM+=s;}
 		Month operator- (int s) const{return operator+(-s);}
-		
 
 		friend std::ostream& operator<< (std::ostream &out, const Month &M){
 			return out<<enumToStr(M.month);
@@ -175,11 +174,14 @@ namespace Calendar{
 			else
 				day_of_week = (getPivotDate().day_of_week + dateDiff(getPivotDate()));
 		}
-			
+		class Iterator;
+
 	public:
 		Date(){operator=(Calendar::Date::getNowDate());}
 		Date(uint16_t d, uint16_t m, uint16_t y):Date(d,m,y,0){}
 		
+		bool operator== (const Date& d){return dateDiff(d)==0;}
+
 		Date shiftDay(const int days) const{
 			int shift = days;
 			Date nextDate(*this);
@@ -262,31 +264,51 @@ namespace Calendar{
 		
 		Month month;
 		
-		class Iterator{
-			Date* date;
-		public:
-			Date& operator*() {return *date;}
-
-			Iterator& operator+= (int sh){
-				*date = date->shiftDay(sh);
-				return *this;
-			}
-			Iterator& operator-= (int sh){return operator+=(-sh);}
-			Iterator& operator++ (){return operator+=(1);}
-			Iterator& operator-- (){return operator-=(1);}
-
-			Iterator operator+ (int sh) const {
-				Iterator curI;
-				*(curI.date) = *(this->date);
-				return curI+=sh;
-			}
-			Iterator operator- (int sh) const {return operator+(-sh);}
-		};
+		Iterator toIter();
+		Iterator beginWeek();
+		Iterator endWeek();
 	private:
 		uint16_t year;
 		uint16_t day;
 		DayOfWeek day_of_week;
 	};
+
+	class Date::Iterator{
+		Date date;
+	public:
+		Iterator(const Iterator& it):date(it.date){}
+		Iterator(Date d):date(d){}
+		Iterator& operator=(const Iterator& it){date = it.date;return *this;}
+		Date& operator*() {return date;}
+
+		Iterator& operator+= (int sh){
+			date = date.shiftDay(sh);
+			return *this;
+		}
+		Iterator& operator-= (int sh){return operator+=(-sh);}
+		Iterator& operator++ (){return operator+=(1);}
+		Iterator& operator-- (){return operator-=(1);}
+
+		bool operator==(const Iterator& it){return date == it.date;}
+		bool operator!=(const Iterator& it){return !operator==(it);}
+
+		Iterator operator+ (int sh) const {
+			Iterator curI(*this);
+			return curI+=sh;
+		}
+		Iterator operator- (int sh) const {return operator+(-sh);}
+	};
+
+	Date::Iterator Date::toIter() {
+		return Iterator(*this);
+	}
+	Date::Iterator Date::beginWeek() {
+		Iterator today(*this);
+		return today -= ((*today).day_of_week.number()-1);
+	}
+	Date::Iterator Date::endWeek() {
+		return beginWeek()+=7;
+	}
 };
 
 using std::cout;
@@ -315,5 +337,21 @@ int main() {
 	cout<<d3<<" "<<d3.toDays()<<endl<<endl;
 
 	LINE();
-	cout<<"---------------------------------------------------"<<endl;
+
+	cout<<"--------------------------iterators-------------------------"<<endl;
+	Calendar::Date today;
+	cout<<"Today: "<<cur<<endl;
+	cout<<"current Week: "<<endl;
+	for(auto it = today.beginWeek(); it != today.endWeek(); ++it )
+		cout<<((*it == today)?" --> ":"     ")<<*it<<endl;
+
+	cout<<endl<<"ex 2:"<<endl;
+	LINE();
+	
+	Calendar::Date day(1,1,2021);
+	cout<<"Day: "<<day<<endl;
+	cout<<"Week: "<<endl;
+	for(auto it = day.beginWeek(); it != day.endWeek(); ++it )
+		cout<<((*it == day)?" --> ":"     ")<<*it<<endl;
+
 }
